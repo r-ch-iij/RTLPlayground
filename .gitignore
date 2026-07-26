@@ -1,4 +1,5 @@
 .gitignore
+.env
 .idea/
 output/
 html_data.c
@@ -7,3 +8,4 @@ version.h
 tools/httpd_sim
 tools/injector
 tools/fileadder
+tools/rtlpctl/rtlpctl
