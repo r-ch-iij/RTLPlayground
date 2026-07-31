@@ -100,7 +100,7 @@ rtlpctl --help
 
 Start without arguments to enter interactive mode.
 
-```
+```bash
 $ rtlpctl --host 192.168.1.1
 rtlpctl: RTLPlayground CLI (connected to http://192.168.1.1)
 Type 'help' for commands, 'exit' to quit.
