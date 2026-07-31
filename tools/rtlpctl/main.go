@@ -29,6 +29,17 @@ func main() {
 		cfg.mode = envOr("MODE", "default")
 	}
 
+	if err := validateHost(cfg.host); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: invalid host:", err)
+		os.Exit(1)
+	}
+	cfg.host = normalizeHost(cfg.host)
+
+	if err := validateMode(cfg.mode); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
+	}
+
 	client := NewClient(cfg.host, cfg.password)
 
 	if len(args) == 0 {

@@ -69,6 +69,9 @@ func cmdVLAN(client *Client, args []string, asJSON bool) error {
 		return nil
 	}
 	vid := args[0]
+	if err := validateVLANID(vid); err != nil {
+		return err
+	}
 	data, err := client.GetJSON(fmt.Sprintf("/vlan.json?vid=%s", vid))
 	if err != nil {
 		return err
@@ -85,6 +88,9 @@ func cmdVLAN(client *Client, args []string, asJSON bool) error {
 func cmdCounters(client *Client, args []string, asJSON bool) error {
 	if len(args) == 0 {
 		return fmt.Errorf("usage: counters <port>")
+	}
+	if err := validateCountersPort(args[0]); err != nil {
+		return err
 	}
 	port, err := strconv.Atoi(args[0])
 	if err != nil {
@@ -168,6 +174,9 @@ func cmdL2(client *Client, args []string, asJSON bool) error {
 		if len(args) < 2 {
 			return fmt.Errorf("usage: l2 delete <idx>")
 		}
+		if err := validateL2Idx(args[1]); err != nil {
+			return err
+		}
 		data, err := client.GetJSON(fmt.Sprintf("/l2_del.json?idx=%s", args[1]))
 		if err != nil {
 			return err
@@ -185,6 +194,9 @@ func cmdL2(client *Client, args []string, asJSON bool) error {
 	} else if len(args) > 1 && args[0] == "get" {
 		idx = args[1]
 	}
+	if err := validateL2Idx(idx); err != nil {
+		return err
+	}
 	data, err := client.GetJSON(fmt.Sprintf("/l2.json?idx=%s", idx))
 	if err != nil {
 		return err
@@ -201,6 +213,9 @@ func cmdConfig(client *Client, args []string, asJSON bool) error {
 	if len(args) > 0 && args[0] == "upload" {
 		if len(args) < 2 {
 			return fmt.Errorf("usage: config upload <file>")
+		}
+		if err := validateFile(args[1]); err != nil {
+			return err
 		}
 		return client.UploadFile("/config", "configuration", args[1])
 	}
@@ -263,6 +278,9 @@ func cmdUpload(client *Client, args []string, asJSON bool) error {
 	if args[0] != "firmware" {
 		return fmt.Errorf("unknown upload type: %s (use: firmware)", args[0])
 	}
+	if err := validateFile(args[1]); err != nil {
+		return err
+	}
 	return client.UploadFile("/upload", "uploadedfile", args[1])
 }
 
@@ -290,16 +308,16 @@ Commands (default mode):
   login <password>           Authenticate with the switch
   status                     Show port status and counters
   info                       Show system information
-  vlan <vid>                 Show VLAN details
+  vlan <vid>                 Show VLAN details (1-4094)
   vlan list                  List all VLANs
-  counters <port>            Show port hardware counters
+  counters <port>            Show port hardware counters (1-8)
   eee                        Show EEE configuration
   bandwidth                  Show bandwidth settings
   mirror                     Show port mirroring configuration
   lag                        Show link aggregation groups
   mtu                        Show per-port MTU settings
-  l2 [idx]                   Show L2 forwarding table
-  l2 delete <idx>            Delete an L2 table entry
+  l2 [idx]                   Show L2 forwarding table (decimal 0-4095)
+  l2 delete <idx>            Delete an L2 table entry (decimal 0-4095)
   config                     Show running configuration
   config upload <file>       Upload configuration file
   cmd <text>                 Execute CLI command

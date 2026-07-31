@@ -69,10 +69,15 @@ func interactiveModeWithMode(client *Client, mode string) {
 			if len(cmdArgs) == 0 {
 				fmt.Printf("current host: %s\n", client.baseURL)
 			} else {
-				client.baseURL = fmt.Sprintf("http://%s", cmdArgs[0])
-				newJar, _ := cookiejar.New(nil)
-				client.http.Jar = newJar
-				fmt.Printf("host set to %s\n", cmdArgs[0])
+				if err := validateHost(cmdArgs[0]); err != nil {
+					fmt.Fprintln(os.Stderr, "Error: invalid host:", err)
+				} else {
+					host := normalizeHost(cmdArgs[0])
+					client.baseURL = fmt.Sprintf("http://%s", host)
+					newJar, _ := cookiejar.New(nil)
+					client.http.Jar = newJar
+					fmt.Printf("host set to %s\n", host)
+				}
 			}
 		case matchCmd(cmd, "password"):
 			if len(cmdArgs) == 0 {
@@ -164,16 +169,16 @@ Internal commands:
   password [PWD]         Set login password
   status                 Show port status
   info                   Show system information
-  vlan <vid>             Show VLAN details
+  vlan <vid>             Show VLAN details (1-4094)
   vlan list              List all VLANs
-  counters <port>        Show port counters
+  counters <port>        Show port counters (1-8)
   eee                    Show EEE configuration
   bandwidth              Show bandwidth settings
   mirror                 Show port mirroring
   lag                    Show LAG groups
   mtu                    Show MTU settings
-  l2 [idx]               Show L2 table
-  l2 delete <idx>        Delete L2 entry
+  l2 [idx]               Show L2 table (decimal 0-4095)
+  l2 delete <idx>        Delete L2 entry (decimal 0-4095)
   config                 Show running configuration
   config upload <file>   Upload config file
   cmd <text>             Execute CLI command

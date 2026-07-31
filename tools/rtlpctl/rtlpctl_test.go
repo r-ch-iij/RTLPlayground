@@ -165,6 +165,113 @@ func TestMatchCmd(t *testing.T) {
 	}
 }
 
+func TestValidateMode(t *testing.T) {
+	for _, m := range []string{"default", "arista"} {
+		if err := validateMode(m); err != nil {
+			t.Errorf("validateMode(%q) unexpected error: %v", m, err)
+		}
+	}
+	for _, m := range []string{"", "Arista", "foo", "eos"} {
+		if err := validateMode(m); err == nil {
+			t.Errorf("validateMode(%q) expected error", m)
+		}
+	}
+}
+
+func TestValidateFile(t *testing.T) {
+	tmp := t.TempDir()
+	file := tmp + "/firmware.bin"
+	if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateFile(file); err != nil {
+		t.Errorf("validateFile(%q) unexpected error: %v", file, err)
+	}
+	for _, p := range []string{"", "/nonexistent/path.bin", tmp, tmp + "/subdir"} {
+		if err := validateFile(p); err == nil {
+			t.Errorf("validateFile(%q) expected error", p)
+		}
+	}
+}
+
+func TestValidateHost(t *testing.T) {
+	valid := []string{
+		"192.168.1.1",
+		"10.0.0.1",
+		"::1",
+		"[::1]",
+		"[2001:db8::1]",
+		"[2001:db8::1]:8080",
+		"192.168.1.1:8080",
+		"host.example.com",
+		"localhost",
+		"rtl-switch-1",
+	}
+	for _, h := range valid {
+		if err := validateHost(h); err != nil {
+			t.Errorf("validateHost(%q) unexpected error: %v", h, err)
+		}
+	}
+
+	invalid := []string{
+		"",
+		"http://192.168.1.1",
+		"https://host.example.com",
+		"1.2.3.4:",
+		"1.2.3.4:99999",
+		"1.2.3.4:abc",
+		"[::1",
+		"[::1]extra",
+		"host name",
+		"-badhost",
+		"bad-.host",
+	}
+	for _, h := range invalid {
+		if err := validateHost(h); err == nil {
+			t.Errorf("validateHost(%q) expected error", h)
+		}
+	}
+}
+
+func TestValidateCountersPort(t *testing.T) {
+	for _, p := range []string{"1", "2", "8"} {
+		if err := validateCountersPort(p); err != nil {
+			t.Errorf("validateCountersPort(%q) unexpected error: %v", p, err)
+		}
+	}
+	for _, p := range []string{"0", "9", "10", "12", "abc", "", "1 "} {
+		if err := validateCountersPort(p); err == nil {
+			t.Errorf("validateCountersPort(%q) expected error", p)
+		}
+	}
+}
+
+func TestValidateVLANID(t *testing.T) {
+	for _, v := range []string{"1", "100", "4094"} {
+		if err := validateVLANID(v); err != nil {
+			t.Errorf("validateVLANID(%q) unexpected error: %v", v, err)
+		}
+	}
+	for _, v := range []string{"0", "4095", "4096", "100.5", "abc", "", "-1"} {
+		if err := validateVLANID(v); err == nil {
+			t.Errorf("validateVLANID(%q) expected error", v)
+		}
+	}
+}
+
+func TestValidateL2Idx(t *testing.T) {
+	for _, v := range []string{"0", "16", "4095"} {
+		if err := validateL2Idx(v); err != nil {
+			t.Errorf("validateL2Idx(%q) unexpected error: %v", v, err)
+		}
+	}
+	for _, v := range []string{"4096", "0x10", "abc", "", "-1"} {
+		if err := validateL2Idx(v); err == nil {
+			t.Errorf("validateL2Idx(%q) expected error", v)
+		}
+	}
+}
+
 func TestLoadDotEnv(t *testing.T) {
 	content := "# comment\nRTLP_HOST=10.0.0.1\nRTLP_PASSWORD=secret\nQUOTED=\"val\"\nEXPORTED=ok\n"
 	tmp := t.TempDir() + "/.env"
@@ -427,7 +534,7 @@ func TestClientEndpoints(t *testing.T) {
 	})
 
 	t.Run("l2_del", func(t *testing.T) {
-		data, err := client.GetJSON("/l2_del.json?idx=0x10")
+		data, err := client.GetJSON("/l2_del.json?idx=16")
 		if err != nil {
 			t.Fatal(err)
 		}

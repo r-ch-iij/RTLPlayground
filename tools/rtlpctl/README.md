@@ -37,15 +37,15 @@ rtlpctl [--host HOST] [--password PASS] [--json] <command> [args...]
 |---------|----------|-------------|
 | `status` | GET /status.json | Port status, link state, counters |
 | `info` | GET /information.json | System info (IP, MAC, version etc.) |
-| `vlan <vid>` | GET /vlan.json?vid=<vid> | VLAN details (members, name, PVID) |
+| `vlan <vid>` | GET /vlan.json?vid=<vid> | VLAN details (members, name, PVID) (1-4094) |
 | `vlan list` | GET /vlanlist | VLAN list |
-| `counters <port>` | GET /counters.json?port=<port> | Port hardware counters |
+| `counters <port>` | GET /counters.json?port=<port> | Port hardware counters (single digit 1-8) |
 | `eee` | GET /eee.json | EEE settings |
 | `bandwidth` | GET /bandwidth.json | Bandwidth control settings |
 | `mirror` | GET /mirror.json | Port mirroring configuration |
 | `lag` | GET /lag.json | Link aggregation groups |
 | `mtu` | GET /mtu.json | Per-port MTU settings |
-| `l2 [idx]` | GET /l2.json?idx=<idx> | L2 forwarding table |
+| `l2 [idx]` | GET /l2.json?idx=<idx> | L2 forwarding table (decimal 0-4095) |
 | `config` | GET /config | Current configuration (CLI format) |
 | `cmd-log` | GET /cmd_log | Command history |
 
@@ -55,7 +55,7 @@ rtlpctl [--host HOST] [--password PASS] [--json] <command> [args...]
 |---------|----------|-------------|
 | `login <password>` | POST /login | Authenticate |
 | `cmd <text>` | POST /cmd | Execute a CLI command |
-| `l2 delete <idx>` | GET /l2_del.json?idx=<idx> | Delete L2 entry |
+| `l2 delete <idx>` | GET /l2_del.json?idx=<idx> | Delete L2 entry (decimal 0-4095) |
 | `cmd-log clear` | GET /cmd_log_clear | Clear command history |
 | `config upload <file>` | POST /config (multipart) | Upload configuration file |
 | `upload firmware <file>` | POST /upload (multipart) | Firmware update |
@@ -86,8 +86,8 @@ rtlpctl status
 rtlpctl cmd "ip 192.168.1.100"
 rtlpctl cmd "vlan add 100 1-4t"
 
-# Delete L2 entry
-rtlpctl l2 delete 0x10
+# Delete L2 entry (decimal index)
+rtlpctl l2 delete 16
 
 # Firmware update
 rtlpctl upload firmware rtlplayground.bin

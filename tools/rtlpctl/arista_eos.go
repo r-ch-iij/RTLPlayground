@@ -222,6 +222,11 @@ func aristaShowInterfaces(client *Client, args []string, jsonMode bool) error {
 	}
 	sub := strings.ToLower(args[0])
 	if matchCmd(sub, "counters") || matchCmd(sub, "count") || matchCmd(sub, "cnt") {
+		if len(args) > 1 {
+			if err := validateCountersPort(eosCmpEthernet(strings.Join(args[1:], " "))); err != nil {
+				return err
+			}
+		}
 		port := parseEthernetPort(strings.Join(args[1:], " "))
 		data, err := client.GetJSON(fmt.Sprintf("/counters.json?port=%d", port))
 		if err != nil {
@@ -232,6 +237,9 @@ func aristaShowInterfaces(client *Client, args []string, jsonMode bool) error {
 	if matchCmd(sub, "status") || matchCmd(sub, "stat") || matchCmd(sub, "brief") {
 		port := 0
 		if len(args) > 1 {
+			if err := validateCountersPort(eosCmpEthernet(args[1])); err != nil {
+				return err
+			}
 			port = parseEthernetPort(args[1])
 		}
 		data, err := client.GetJSON("/status.json")
@@ -246,6 +254,10 @@ func aristaShowInterfaces(client *Client, args []string, jsonMode bool) error {
 	}
 	port := parseEthernetPort(sub)
 	if port > 0 {
+		if port > 8 {
+			aristaUnknown("show interfaces "+sub, jsonMode)
+			return nil
+		}
 		data, err := client.GetJSON("/status.json")
 		if err != nil {
 			return err
@@ -262,6 +274,9 @@ func aristaShowInterfaces(client *Client, args []string, jsonMode bool) error {
 
 func aristaShowVlan(client *Client, args []string, jsonMode bool) error {
 	if len(args) >= 2 && matchCmd(args[0], "id") {
+		if err := validateVLANID(args[1]); err != nil {
+			return err
+		}
 		data, err := client.GetJSON(fmt.Sprintf("/vlan.json?vid=%s", args[1]))
 		if err != nil {
 			return err
@@ -283,6 +298,9 @@ func aristaShowMac(client *Client, args []string, jsonMode bool) error {
 		}
 	} else if len(args) > 0 {
 		idx = args[0]
+	}
+	if err := validateL2Idx(idx); err != nil {
+		return err
 	}
 	data, err := client.GetJSON(fmt.Sprintf("/l2.json?idx=%s", idx))
 	if err != nil {
