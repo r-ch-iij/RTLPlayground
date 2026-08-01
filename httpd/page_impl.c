@@ -186,6 +186,19 @@ void send_sfp_info(uint8_t sfp)
 }
 
 
+void send_sfp_eeprom(uint8_t slot)
+{
+	slen = strtox(outbuf, HTTP_RESPONCE_JSON);
+	slen += strtox(outbuf + slen, "{\"slot\":");
+	itoa_html(slot);
+	slen += strtox(outbuf + slen, ",\"data\":\"");
+	for (uint16_t i = 0; i < 256; i++) {
+		byte_to_html(sfp_read_reg(slot, (uint8_t)i));
+	}
+	slen += strtox(outbuf + slen, "\"}");
+}
+
+
 void sfp_send_data(uint8_t slot, uint8_t reg, uint8_t len)
 {
 	// maximum supported transfer size is 16 bytes
@@ -880,5 +893,39 @@ void send_vlanlist(void)
 
 	}
 
+	char_to_html(']');
+}
+
+
+void send_sfp_diag(void)
+{
+	slen = strtox(outbuf, HTTP_RESPONCE_JSON);
+	char_to_html('[');
+	uint8_t first = 1;
+	for (uint8_t i = machine.min_port; i <= machine.max_port; i++) {
+		if (!machine.is_sfp[i]) continue;
+		uint8_t sfp = machine.is_sfp[i] - 1;
+		if (!first) char_to_html(',');
+		first = 0;
+		slen += strtox(outbuf + slen, "{\"portNum\":");
+		itoa_html(machine.log_to_phys_port[i]);
+		slen += strtox(outbuf + slen, ",\"sfp_options\":\"0x");
+		byte_to_html(sfp_options[sfp]);
+		if (sfp_options[sfp] & 0x40) {
+			slen += strtox(outbuf + slen,"\",\"sfp_temp\":\"0x");
+			sfp_send_data(sfp, 224, 2);
+			slen += strtox(outbuf + slen,"\",\"sfp_vcc\":\"0x");
+			sfp_send_data(sfp, 226, 2);
+			slen += strtox(outbuf + slen,"\",\"sfp_txbias\":\"0x");
+			sfp_send_data(sfp, 228, 2);
+			slen += strtox(outbuf + slen,"\",\"sfp_txpower\":\"0x");
+			sfp_send_data(sfp, 230, 2);
+			slen += strtox(outbuf + slen,"\",\"sfp_rxpower\":\"0x");
+			sfp_send_data(sfp, 232, 2);
+		}
+		slen += strtox(outbuf + slen,"\",\"sfp_state\":\"0x");
+		sfp_send_data(sfp, 238, 1);
+		slen += strtox(outbuf + slen,"\"}");
+	}
 	char_to_html(']');
 }

@@ -10,6 +10,7 @@ var LANG = {
     nav_bandwidth: 'Bandwidth Limits',
     nav_system: 'System Settings',
     nav_fw_update: 'Firmware Update',
+    nav_sfp: 'SFP EEPROM',
 
     port_name: 'Name',
     port_status: 'Status',
@@ -176,6 +177,18 @@ var LANG = {
 
     common_port: 'Port ',
     common_pkts: ' pkts',
+
+    sfp_title: 'SFP EEPROM Editor',
+    sfp_heading: 'SFP EEPROM Editor',
+    sfp_slot: 'Slot:',
+    sfp_refresh: 'Refresh',
+    sfp_download: 'Download .bin',
+    sfp_upload: 'Upload .bin',
+    sfp_save_backup: 'Save Backup',
+    sfp_restore_backup: 'Restore Backup',
+    sfp_patch: 'Patch FC->Eth',
+    sfp_fix_checksum: 'Fix Checksum',
+    sfp_pw: 'PW:',
   },
 
   ja: {
@@ -189,6 +202,7 @@ var LANG = {
     nav_bandwidth: '帯域制限',
     nav_system: 'システム設定',
     nav_fw_update: 'ファームウェア更新',
+    nav_sfp: 'SFP EEPROM',
 
     port_name: '名前',
     port_status: '状態',
@@ -355,6 +369,18 @@ var LANG = {
 
     common_port: 'ポート ',
     common_pkts: ' pkts',
+
+    sfp_title: 'SFP EEPROMエディタ',
+    sfp_heading: 'SFP EEPROMエディタ',
+    sfp_slot: 'スロット:',
+    sfp_refresh: '更新',
+    sfp_download: 'ダウンロード .bin',
+    sfp_upload: 'アップロード .bin',
+    sfp_save_backup: 'バックアップ保存',
+    sfp_restore_backup: 'バックアップ復元',
+    sfp_patch: 'FC→Ethパッチ',
+    sfp_fix_checksum: 'チェックサム修正',
+    sfp_pw: 'PW:',
   },
 
   zh: {
@@ -368,6 +394,7 @@ var LANG = {
     nav_bandwidth: '带宽限制',
     nav_system: '系统设置',
     nav_fw_update: '固件升级',
+    nav_sfp: 'SFP EEPROM',
 
     port_name: '名称',
     port_status: '状态',
@@ -534,6 +561,18 @@ var LANG = {
 
     common_port: '端口 ',
     common_pkts: ' 个包',
+
+    sfp_title: 'SFP EEPROM 编辑器',
+    sfp_heading: 'SFP EEPROM 编辑器',
+    sfp_slot: '插槽:',
+    sfp_refresh: '刷新',
+    sfp_download: '下载 .bin',
+    sfp_upload: '上传 .bin',
+    sfp_save_backup: '保存备份',
+    sfp_restore_backup: '恢复备份',
+    sfp_patch: 'FC→Eth 补丁',
+    sfp_fix_checksum: '修复校验和',
+    sfp_pw: '密码:',
   }
 };
 

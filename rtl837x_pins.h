@@ -77,6 +77,9 @@ uint8_t i2c_bus_from_sda_pin(uint8_t sda_pin) __banked;
 /* Convert SCL PIN GPIO to I2C bus number */
 uint8_t i2c_bus_from_scl_pin(uint8_t scl_pin) __banked;
 
+/* Enable GPIO functions for pin */
+void gpio_mux_setup(uint8_t pin) __banked;
+
 /*
  * Setup a GPIO pin as input
  * pin: GPIO pin number 0-63

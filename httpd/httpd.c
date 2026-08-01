@@ -662,6 +662,8 @@ void httpd_appcall(void)
 			} else if (!strcmp(q, "/vlan.json")) {
 				parse_short(q + 15);
 				send_vlan(short_parsed);
+			} else if (is_word(q, "/sfp_diag.json")) {
+				send_sfp_diag();
 			} else if (is_word(q, "/counters.json")) {
 				send_counters(q[20]-'0');
 			} else if (is_word(q, "/eee.json")) {
@@ -680,6 +682,9 @@ void httpd_appcall(void)
 				send_mtu();
 			} else if (is_word(q, "/lag.json")) {
 				send_lag();
+			} else if (is_word(q, "/sfp_eeprom.json")) {
+				parse_short(q + 20);
+				send_sfp_eeprom(short_parsed);
 			} else if (is_word(q, "/vlanlist")) {
 				send_vlanlist();
 			} else if (is_word(q, "/config")) {

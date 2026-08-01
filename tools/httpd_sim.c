@@ -527,6 +527,64 @@ void send_not_found(int socket) {
 }
 
 
+void send_sfp_eeprom(int s, int slot)
+{
+	struct json_object *v;
+	const char *jstring;
+        char *header = "HTTP/1.1 200 OK\r\n"
+                       "Content-Type: application/json; charset=UTF-8\r\n\r\n";
+
+	v = json_object_new_object();
+	json_object_object_add(v, "slot", json_object_new_int(slot));
+	// Return empty 256-byte EEPROM data (all zeros)
+	char data[513];
+	memset(data, '0', 512);
+	data[512] = '\0';
+	json_object_object_add(v, "data", json_object_new_string(data));
+
+        write(s, header, strlen(header));
+	jstring = json_object_to_json_string_ext(v, JSON_C_TO_STRING_PLAIN);
+        write(s, jstring, strlen(jstring));
+	json_object_put(v);
+}
+
+
+void send_sfp_diag(int s)
+{
+	struct json_object *arr, *v;
+	const char *jstring;
+	char *header = "HTTP/1.1 200 OK\r\n"
+		       "Content-Type: application/json; charset=UTF-8\r\n\r\n";
+
+	arr = json_object_new_array();
+	for (int i = 1; i <= PORTS; i++) {
+		if (i <= PORTS - NSFP) continue;
+		v = json_object_new_object();
+		json_object_object_add(v, "portNum", json_object_new_int(i));
+		sprintf(sfp_options, "0x%02x", 0x68);
+		json_object_object_add(v, "sfp_options", json_object_new_string(sfp_options));
+		sprintf(sfp_temp, "0x%04x", 0x28fb + rand() / (RAND_MAX / 100));
+		json_object_object_add(v, "sfp_temp", json_object_new_string(sfp_temp));
+		sprintf(sfp_vcc, "0x%04x", 0x7eda + rand() / (RAND_MAX / 100));
+		json_object_object_add(v, "sfp_vcc", json_object_new_string(sfp_vcc));
+		sprintf(sfp_txbias, "0x%04x", 0x0d24 + rand() / (RAND_MAX / 100));
+		json_object_object_add(v, "sfp_txbias", json_object_new_string(sfp_txbias));
+		sprintf(sfp_txpower, "0x%04x", 0x14bd + rand() / (RAND_MAX / 100));
+		json_object_object_add(v, "sfp_txpower", json_object_new_string(sfp_txpower));
+		sprintf(sfp_rxpower, "0x%04x", 0x0000);
+		json_object_object_add(v, "sfp_rxpower", json_object_new_string(sfp_rxpower));
+		sprintf(sfp_laser, "0x%02x", 0x00);
+		json_object_object_add(v, "sfp_state", json_object_new_string(sfp_laser));
+		json_object_array_add(arr, v);
+	}
+
+	write(s, header, strlen(header));
+	jstring = json_object_to_json_string_ext(arr, JSON_C_TO_STRING_PLAIN);
+	write(s, jstring, strlen(jstring));
+	json_object_put(arr);
+}
+
+
 void send_bad_request(int socket) {
 	char *response = "HTTP/1.1 400 Bad Request\r\n"
 			"Content-Type: text/html\r\n\r\n"
@@ -618,6 +676,7 @@ void launch(struct Server *server)
     FILE *inptr;
 
     last_called = time(NULL);
+    last_session_use = time(NULL);
     for (int i=0; i < PORTS; i++)
 	    txG[i] = txB[i] = rxG[i] = rxB[i] = 0;
 
@@ -642,6 +701,13 @@ void launch(struct Server *server)
 						send_unauthorized(new_socket);
 					else
 						send_status(new_socket);
+					goto done;
+				} else if (!strncmp(&buffer[4], "/sfp_diag.json", 14)) {
+					printf("SFP diag request\n");
+					if (!authenticated)
+						send_unauthorized(new_socket);
+					else
+						send_sfp_diag(new_socket);
 					goto done;
 				} else if (!strncmp(&buffer[4], "/eee.json", 9)) {
 					printf("EEE request\n");
@@ -715,6 +781,14 @@ void launch(struct Server *server)
 					else
 						send_config(new_socket);
 					goto done;
+				} else if (!strncmp(&buffer[4], "/sfp_eeprom.json?slot=", 22)) {
+					int slot = atoi(&buffer[26]);
+					printf("SFP EEPROM request for slot %d\n", slot);
+					if (!authenticated)
+						send_unauthorized(new_socket);
+					else
+						send_sfp_eeprom(new_socket, slot);
+					goto done;
 				} else if (!strncmp(&buffer[4], "/counters.json?port=", 20)) {
 					int port = atoi(&buffer[24]);
 					printf("Counters request for %d\n", port);
@@ -741,7 +815,7 @@ void launch(struct Server *server)
 				if (i > 1)
 					inptr = fopen(&buffer[5], "rb");
 				else
-					inptr = fopen("/index.html", "rb");
+					inptr = fopen("index.html", "rb");
 				if (inptr == NULL) {
 					printf("Cannot open input file %s\n", &buffer[5]);
 					send_not_found(new_socket);

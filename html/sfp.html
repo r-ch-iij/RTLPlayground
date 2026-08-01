@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/i18n.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <title data-i18n="sfp_title">SFP EEPROM Editor</title>
+  </head>
+  <body>
+    <nav id="sidebar"></nav>
+    <div style="margin-left:16%;padding:1px 16px;height:1000px;">
+    <div id="ports"></div>
+
+    <h1 data-i18n="sfp_heading">SFP EEPROM Editor</h1>
+    <div class="row">
+      <div class="lcol"><label for="slotsel" data-i18n="sfp_slot">Slot:</label></div>
+      <div class="rcol">
+        <select id="slotsel" onchange="loadEeprom()">
+          <option value="0">SFP 1</option>
+          <option value="1">SFP 2</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="lcol"></div>
+      <div class="rcol">
+        <input style="width:40%;" class="action" id="sfp_refresh" onclick="loadEeprom();" type="button" data-i18n="sfp_refresh" value="Refresh">
+        <input style="width:40%;" class="action" id="sfp_download" onclick="downloadBin();" type="button" data-i18n="sfp_download" value="Download .bin">
+        <input type="file" id="uploadfile" accept=".bin" style="display:none" onchange="uploadBin(this)">
+        <input style="width:40%;" class="action" id="sfp_upload" onclick="document.getElementById('uploadfile').click();" type="button" data-i18n="sfp_upload" value="Upload .bin">
+        <input style="width:40%;" class="action" id="sfp_save_backup" onclick="saveBackup();" type="button" data-i18n="sfp_save_backup" value="Save Backup">
+        <input style="width:40%;" class="action" id="sfp_restore_backup" onclick="restoreBackup();" type="button" data-i18n="sfp_restore_backup" value="Restore Backup">
+        <input style="width:40%;" class="action" id="sfp_patch" onclick="patchEeprom();" type="button" data-i18n="sfp_patch" value="Patch FC->Eth">
+        <input style="width:40%;" class="action" id="sfp_fix_checksum" onclick="fixChecksum();" type="button" data-i18n="sfp_fix_checksum" value="Fix Checksum">
+      </div>
+    </div>
+    <div class="row">
+      <div class="lcol"><label for="pwinput" data-i18n="sfp_pw">PW:</label></div>
+      <div class="rcol"><input type="text" id="pwinput" size="8" maxlength="8" placeholder="00000000" style="font-family:monospace;width:80px;"></div>
+    </div>
+    <div id="info" style="margin-top:1em;font-family:monospace;font-size:13px;"></div>
+    <div id="hexdump" style="margin-top:1em;font-family:monospace;font-size:12px;"></div>
+
+    <details style="margin-top:2em;font-size:13px;">
+      <summary style="font-weight:600;cursor:pointer;">使い方 / Usage</summary>
+      <ol style="line-height:1.8;color:#444;">
+        <li>Slot で SFP を選択し、<b>Refresh</b> で EEPROM を読み出します。</li>
+        <li>hexdump のセルをクリックすると、その1バイトを書き換えられます（<b>Write</b>）。変更後は <b>Fix Checksum</b> でチェックサムを更新してください。</li>
+        <li><b>Patch FC-&gt;Eth</b> は FC モジュールの EEPROM を Ethernet 用に修正します。</li>
+        <li><b>Save Backup</b> で現在の EEPROM をフラッシュに退避、<b>Restore Backup</b> で復元できます。</li>
+        <li><b>Download .bin</b> で 256 バイトの EEPROM イメージを保存、<b>Upload .bin</b> で書き込みます。</li>
+        <li>パスワード保護されたモジュールは <b>PW</b> に 8 桁の HEX パスワードを入力してください。</li>
+      </ol>
+    </details>
+
+    </div>
+    <script src="/sfp.js"></script>
+    <script src="/navigation.js"></script>
+  </body>
+</html>

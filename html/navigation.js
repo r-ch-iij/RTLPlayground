@@ -7,8 +7,9 @@ document.getElementById('sidebar').innerHTML =
  + "<li><a href='mirror.html' data-i18n='nav_mirror'>Mirroring</a></li>"
  + "<li><a href='lag.html' data-i18n='nav_lag'>Link Aggregation</a></li>"
  + "<li><a href='eee.html' data-i18n='nav_eee'>EEE</a></li>"
- + "<li><a href='bandwidth.html' data-i18n='nav_bandwidth'>Bandwidth Limits</a></li>"
- + "<li><a href='system.html' data-i18n='nav_system'>System Settings</a></li>"
+  + "<li><a href='bandwidth.html' data-i18n='nav_bandwidth'>Bandwidth Limits</a></li>"
+  + "<li><a href='sfp.html' data-i18n='nav_sfp'>SFP EEPROM</a></li>"
+  + "<li><a href='system.html' data-i18n='nav_system'>System Settings</a></li>"
  + "<li><a href='update.html' data-i18n='nav_fw_update'>Firmware Update</a></li></ul>";
 
 document.addEventListener('DOMContentLoaded', function() {
