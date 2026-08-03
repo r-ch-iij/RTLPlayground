@@ -45,6 +45,7 @@ rtlpctl [--host HOST] [--password PASS] [--json] <command> [args...]
 | `mirror` | GET /mirror.json | Port mirroring configuration |
 | `lag` | GET /lag.json | Link aggregation groups |
 | `mtu` | GET /mtu.json | Per-port MTU settings |
+| `sfp-diag` | GET /sfp_diag.json | SFP module diagnostics (DDM: temp, Vcc, TX/RX power) |
 | `l2 [idx]` | GET /l2.json?idx=<idx> | L2 forwarding table (decimal 0-4095) |
 | `config` | GET /config | Current configuration (CLI format) |
 | `cmd-log` | GET /cmd_log | Command history |
@@ -60,6 +61,63 @@ rtlpctl [--host HOST] [--password PASS] [--json] <command> [args...]
 | `config upload <file>` | POST /config (multipart) | Upload configuration file |
 | `upload firmware <file>` | POST /upload (multipart) | Firmware update |
 | `reset` | GET /reset | Reboot the switch |
+
+### SFP EEPROM Commands
+
+SFP EEPROM read/write commands are not dedicated subcommands; they are sent to the switch CLI through `cmd`. Slot is `1` or `2`, depending on the switch model.
+
+```bash
+# List installed SFP modules
+rtlpctl cmd "sfp"
+
+# Dump the full EEPROM of slot 1 (0x00-0xFF)
+rtlpctl cmd "sfp 1 dump"
+
+# Show vendor, model, serial and checksum status
+rtlpctl cmd "sfp 1 describe"
+
+# Set the link speed
+rtlpctl cmd "sfp 2 10g"
+
+# Write a single byte: byte 0x33 (offset) = 0x35 ('5')
+# On success the affected checksum (CC_BASE / CC_EXT) is updated automatically.
+rtlpctl cmd "sfp 2 write 33 35"
+
+# Verify / rewrite the EEPROM checksums
+rtlpctl cmd "sfp 1 checksum"
+rtlpctl cmd "sfp 1 checksum --fix"
+
+# Save the EEPROM to flash backup, or restore it later
+rtlpctl cmd "sfp 1 save"
+rtlpctl cmd "sfp 1 restore"
+
+# Recode an FC (Fibre Channel) module to Ethernet
+rtlpctl cmd "sfp 1 patch"
+
+# Password-protected modules need an 8-hex-char unlock password
+rtlpctl cmd "sfp 1 patch --pw 12345678"
+
+# Bulk-write all 256 EEPROM bytes (512 hex chars)
+rtlpctl cmd "sfp 1 bulk <512 hex chars>"
+```
+
+Common SFP commands:
+
+| Command | Description |
+|---------|-------------|
+| `sfp [1\|2] [1g\|2g5\|10g]` | Set link speed (`1g`, `2g5`, `10g`, `100m`, `auto`) |
+| `sfp [1\|2] describe` | Vendor, model, serial, checksum status |
+| `sfp [1\|2] dump` | Hex dump of the EEPROM (0x00-0xFF) |
+| `sfp [1\|2] save` | Save EEPROM to flash backup |
+| `sfp [1\|2] restore` | Restore EEPROM from flash backup |
+| `sfp [1\|2] checksum [--fix]` | Verify CC_BASE/CC_EXT; `--fix` rewrites them |
+| `sfp [1\|2] fix` | Recode EEPROM for copper passthrough |
+| `sfp [1\|2] patch [--pw <hex8>]` | Recode an FC module to Ethernet |
+| `sfp [1\|2] clone [--pw <hex8>]` | Write all 256 bytes from the flash buffer |
+| `sfp [1\|2] write <off> <val> [--pw <hex8>]` | Write one EEPROM byte (hex) |
+| `sfp [1\|2] bulk <512hexchars>` | Bulk-write all 256 EEPROM bytes |
+
+`--pw <hex8>` is the EEPROM unlock password (8 hex chars). If omitted or rejected, the firmware tries a plain write first, then falls back through its built-in password dictionary (00000000 first).
 
 ### Examples
 
@@ -85,6 +143,11 @@ rtlpctl status
 # Execute CLI commands (change settings)
 rtlpctl cmd "ip 192.168.1.100"
 rtlpctl cmd "vlan add 100 1-4t"
+
+# SFP diagnostics and EEPROM access
+rtlpctl sfp-diag
+rtlpctl cmd "sfp 1 dump"
+rtlpctl cmd "sfp 2 write 33 35"
 
 # Delete L2 entry (decimal index)
 rtlpctl l2 delete 16

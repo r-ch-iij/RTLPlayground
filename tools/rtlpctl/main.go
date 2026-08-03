@@ -133,6 +133,8 @@ func runCmd(client *Client, args []string, cfg config) error {
 		return cmdLAG(client, cmdArgs, cfg.jsonMode)
 	case "mtu":
 		return cmdMTU(client, cmdArgs, cfg.jsonMode)
+	case "sfp-diag", "sfpdiag":
+		return cmdSfpDiag(client, cmdArgs, cfg.jsonMode)
 	case "l2":
 		return cmdL2(client, cmdArgs, cfg.jsonMode)
 	case "config":

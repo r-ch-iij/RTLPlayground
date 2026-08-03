@@ -229,6 +229,29 @@ func fmtInformation(info map[string]interface{}, asJSON bool) {
 	printKV(kv)
 }
 
+func fmtSfpDiag(ports []interface{}, asJSON bool) {
+	if asJSON {
+		printJSON(ports)
+		return
+	}
+	header := []string{"Port", "Options", "Temp", "Vcc", "TX Bias", "TX Power", "RX Power", "State"}
+	var rows [][]string
+	for _, p := range ports {
+		pm := p.(map[string]interface{})
+		rows = append(rows, []string{
+			fmtInt(pm["portNum"]),
+			fmtStr(pm["sfp_options"]),
+			fmtStr(pm["sfp_temp"]),
+			fmtStr(pm["sfp_vcc"]),
+			fmtStr(pm["sfp_txbias"]),
+			fmtStr(pm["sfp_txpower"]),
+			fmtStr(pm["sfp_rxpower"]),
+			fmtStr(pm["sfp_state"]),
+		})
+	}
+	printTable(header, rows)
+}
+
 func fmtVLAN(vlan map[string]interface{}, asJSON bool) {
 	if asJSON {
 		printJSON(vlan)

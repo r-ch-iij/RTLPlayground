@@ -177,6 +177,7 @@ Internal commands:
   mirror                 Show port mirroring
   lag                    Show LAG groups
   mtu                    Show MTU settings
+  sfp-diag               Show SFP module diagnostics
   l2 [idx]               Show L2 table (decimal 0-4095)
   l2 delete <idx>        Delete L2 entry (decimal 0-4095)
   config                 Show running configuration
@@ -186,6 +187,25 @@ Internal commands:
   cmd-log clear          Clear command history
   upload firmware <file> Upload firmware
   reset                  Reboot the switch
+
+SFP EEPROM (via "cmd", e.g. "cmd sfp 1 dump"):
+  sfp                         List SFP modules
+  sfp <slot> [1g|2g5|10g]     Set SFP link speed
+  sfp <slot> describe         Vendor, model, serial, checksum status
+  sfp <slot> dump             Hex dump of SFP EEPROM
+  sfp <slot> save             Save EEPROM to flash backup
+  sfp <slot> restore          Restore EEPROM from flash backup
+  sfp <slot> checksum [--fix] Verify / rewrite CC_BASE, CC_EXT
+  sfp <slot> fix              Recode EEPROM for copper passthrough
+  sfp <slot> patch [--pw <hex8>]
+                              Recode an FC module to Ethernet
+  sfp <slot> clone [--pw <hex8>]
+                              Write 256 bytes from flash buffer
+  sfp <slot> write <off> <val> [--pw <hex8>]
+                              Write one EEPROM byte (offset/value in hex)
+  sfp <slot> bulk <512hexchars>
+                              Bulk-write all 256 EEPROM bytes
+
   host [IP]              Show or set host
   password [PWD]         Set password
   mode [arista|default]  Switch CLI mode

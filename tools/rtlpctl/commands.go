@@ -293,6 +293,19 @@ func cmdReset(client *Client, args []string, asJSON bool) error {
 	return nil
 }
 
+func cmdSfpDiag(client *Client, args []string, asJSON bool) error {
+	data, err := client.GetJSON("/sfp_diag.json")
+	if err != nil {
+		return err
+	}
+	ports, ok := data.([]interface{})
+	if !ok {
+		return fmt.Errorf("unexpected response format")
+	}
+	fmtSfpDiag(ports, asJSON)
+	return nil
+}
+
 func printHelp() {
 	fmt.Println(`Usage: rtlpctl [global flags] <command> [args...]
 
@@ -316,6 +329,7 @@ Commands (default mode):
   mirror                     Show port mirroring configuration
   lag                        Show link aggregation groups
   mtu                        Show per-port MTU settings
+  sfp-diag                   Show SFP module diagnostics (DDM)
   l2 [idx]                   Show L2 forwarding table (decimal 0-4095)
   l2 delete <idx>            Delete an L2 table entry (decimal 0-4095)
   config                     Show running configuration
@@ -325,6 +339,40 @@ Commands (default mode):
   cmd-log clear              Clear command history
   upload firmware <file>     Upload firmware image
   reset                      Reboot the switch
+
+SFP EEPROM commands (run via "cmd"):
+  These commands are sent to the switch CLI with "cmd", e.g.
+    rtlpctl cmd "sfp 1 dump"
+  Slot is 1 or 2; the number of slots depends on the switch model.
+
+  sfp                          List installed SFP modules
+  sfp [1|2] [1g|2g5|10g]       Set SFP link speed (1g, 2g5, 10g, 100m, auto)
+  sfp [1|2] describe           Show vendor, model, serial, checksum status
+  sfp [1|2] dump               Hex dump of SFP EEPROM (0x00-0xFF)
+  sfp [1|2] save               Save EEPROM to flash backup
+  sfp [1|2] restore            Restore EEPROM from flash backup
+  sfp [1|2] checksum [--fix]   Verify CC_BASE/CC_EXT; --fix rewrites them
+  sfp [1|2] fix                Recode EEPROM for copper passthrough
+  sfp [1|2] patch [--pw <hex8>]
+                               Recode an FC (Fibre Channel) module to
+                               Ethernet: byte 0x03=0x20 (10GBase-LR),
+                               0x06=0x02, 0x07=0x00, 0x09=0x00, then fix
+                               the checksum
+  sfp [1|2] clone [--pw <hex8>]
+                               Write all 256 bytes from the flash buffer
+  sfp [1|2] write <off> <val> [--pw <hex8>]
+                               Write one byte. <off> = EEPROM byte offset
+                               (0x00-0xFF), <val> = byte value; both hex.
+                               Example: "sfp 2 write 33 35" sets byte 0x33
+                               to ASCII '5' (model "...-87" -> "...-85").
+                               On success the affected checksum is updated
+                               automatically (CC_BASE for 0x00-0x3E,
+                               CC_EXT for 0x40-0x5E).
+  sfp [1|2] bulk <512hexchars> Bulk-write all 256 EEPROM bytes (512 hex chars)
+
+  --pw <hex8>: 8-hex-char EEPROM unlock password. If omitted or rejected,
+               the firmware tries a plain write first, then falls back
+               through its built-in password dictionary (00000000 first).
 
 Arista mode (--mode arista):
   Use Arista EOS-style commands (show interfaces status, show vlan, etc.)
