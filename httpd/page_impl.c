@@ -188,6 +188,13 @@ void send_sfp_info(uint8_t sfp)
 
 void send_sfp_eeprom(uint8_t slot)
 {
+	if (slot >= machine.n_sfp) {
+		slen = strtox(outbuf, HTTP_RESPONCE_JSON);
+		slen += strtox(outbuf + slen, "{\"slot\":");
+		itoa_html(slot);
+		slen += strtox(outbuf + slen, ",\"data\":\"\"}");
+		return;
+	}
 	slen = strtox(outbuf, HTTP_RESPONCE_JSON);
 	slen += strtox(outbuf + slen, "{\"slot\":");
 	itoa_html(slot);

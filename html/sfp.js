@@ -3,6 +3,18 @@ var sfpSlot = 0;
 
 function hex(b) { return (b >> 4).toString(16) + (b & 0xf).toString(16); }
 
+function buildSlotSelect() {
+  fetch('/information.json').then(function(r) { return r.json(); }).then(function(j) {
+    var sel = document.getElementById('slotsel');
+    var opts = '<option value="0">SFP 1</option>';
+    if ('sfp_slot_1' in j) opts += '<option value="1">SFP 2</option>';
+    sel.innerHTML = opts;
+    loadEeprom();
+  }).catch(function() {
+    loadEeprom();
+  });
+}
+
 function pwArg() {
   var pw = document.getElementById('pwinput').value.trim();
   if (!pw) return '';
@@ -142,5 +154,5 @@ async function uploadBin(input) {
 }
 
 window.addEventListener("load", function() {
-  loadEeprom();
+  buildSlotSelect();
 });
