@@ -457,14 +457,18 @@ func eosSpeed(link interface{}) string {
 	switch v := link.(type) {
 	case float64:
 		switch int(v) {
-		case 5:
-			return "2.5G"
-		case 4:
-			return "1G"
-		case 3:
-			return "100M"
-		case 2:
+		case 1:
 			return "10M"
+		case 2:
+			return "100M"
+		case 3:
+			return "1G"
+		case 5:
+			return "10G"
+		case 6:
+			return "2.5G"
+		case 7:
+			return "5G"
 		}
 	}
 	return "down"

@@ -285,9 +285,11 @@ func cmdUpload(client *Client, args []string, asJSON bool) error {
 }
 
 func cmdReset(client *Client, args []string, asJSON bool) error {
-	_, err := client.GetText("/reset")
-	if err != nil {
-		return err
+	// The firmware closes the connection without sending an HTTP response,
+	// so a response is not expected (nor required) here.
+	resp, err := client.get("/reset")
+	if err == nil {
+		resp.Body.Close()
 	}
 	fmt.Println("reset command sent")
 	return nil

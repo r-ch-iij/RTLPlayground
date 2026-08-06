@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 )
@@ -31,8 +32,15 @@ func printTable(header []string, rows [][]string) {
 
 func printKV(kv map[string]string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	for k, v := range kv {
-		fmt.Fprintf(w, "%s:\t%s\n", k, v)
+	// Sort keys so the output order is deterministic (Go map iteration
+	// order is randomized otherwise).
+	keys := make([]string, 0, len(kv))
+	for k := range kv {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Fprintf(w, "%s:\t%s\n", k, kv[k])
 	}
 	w.Flush()
 }
@@ -85,39 +93,36 @@ func fmtStr(v interface{}) string {
 func fmtLink(v interface{}) string {
 	switch val := v.(type) {
 	case float64:
-		n := int(val)
-		switch n {
-		case 0:
-			return "down"
-		case 5:
-			return "2.5G"
-		case 4:
-			return "1G"
-		case 3:
-			return "100M"
-		case 2:
-			return "10M"
-		default:
-			return fmt.Sprintf("link(%d)", n)
-		}
+		return linkCodeString(int(val))
 	case json.Number:
 		n, _ := val.Int64()
-		switch n {
-		case 0:
-			return "down"
-		case 5:
-			return "2.5G"
-		case 4:
-			return "1G"
-		case 3:
-			return "100M"
-		case 2:
-			return "10M"
-		default:
-			return fmt.Sprintf("link(%d)", n)
-		}
+		return linkCodeString(int(n))
 	}
 	return fmt.Sprintf("%v", v)
+}
+
+// linkCodeString maps the /status.json link code to a speed string. The
+// firmware sends the RTL837X_REG_LINKS speed field + 1 (see httpd/page_impl.c
+// send_status): 0=down, 1=10M, 2=100M, 3=1G, 5=10G, 6=2.5G, 7=5G.
+func linkCodeString(n int) string {
+	switch n {
+	case 0:
+		return "down"
+	case 1:
+		return "10M"
+	case 2:
+		return "100M"
+	case 3:
+		return "1G"
+	case 5:
+		return "10G"
+	case 6:
+		return "2.5G"
+	case 7:
+		return "5G"
+	default:
+		return fmt.Sprintf("link(%d)", n)
+	}
 }
 
 func fmtCounter(v interface{}) string {
@@ -149,11 +154,14 @@ func fmtPortStatus(ports []interface{}, asJSON bool) {
 		}
 		rows = append(rows, row)
 		if sfpVendor := fmtStr(pm["sfp_vendor"]); sfpVendor != "" {
-			rows = append(rows, []string{"", fmt.Sprintf("  SFP: %s %s", sfpVendor, fmtStr(pm["sfp_model"]))})
-			if temp := fmtStr(pm["sfp_temp"]); temp != "" {
-				rows = append(rows, []string{"", fmt.Sprintf("  Temp: %s  Vcc: %s  TX Bias: %s", temp, fmtStr(pm["sfp_vcc"]), fmtStr(pm["sfp_txbias"]))})
-				rows = append(rows, []string{"", fmt.Sprintf("  TX Power: %s  RX Power: %s", fmtStr(pm["sfp_txpower"]), fmtStr(pm["sfp_rxpower"]))})
+			rows = append(rows, detailRow(fmt.Sprintf("  SFP: %s %s", sfpVendor, fmtStr(pm["sfp_model"]))))
+			if serial := fmtStr(pm["sfp_serial"]); serial != "" {
+				rows = append(rows, detailRow(fmt.Sprintf("  Serial: %s", serial)))
 			}
+			if los := pm["sfp_los"]; los != nil {
+				rows = append(rows, detailRow(fmt.Sprintf("  LOS: %s", fmtBool(los))))
+			}
+			rows = append(rows, detailRow("  (use 'sfp-diag' for module diagnostics)"))
 		}
 		if adv := fmtStr(pm["adv"]); adv != "" {
 			modes := []string{}
@@ -178,11 +186,19 @@ func fmtPortStatus(ports []interface{}, asJSON bool) {
 				}
 			}
 			if len(modes) > 0 {
-				rows = append(rows, []string{"", "  Adv: " + strings.Join(modes, " ")})
+				rows = append(rows, detailRow("  Adv: "+strings.Join(modes, " ")))
 			}
 		}
 	}
 	printTable(header, rows)
+}
+
+// detailRow returns a table row whose text is placed in the Name column.
+// The trailing empty cells keep the row at the full column count: tabwriter
+// (Elastic Tabstops) splits the column block at lines with fewer cells,
+// which would leave the rows after the detail line misaligned.
+func detailRow(text string) []string {
+	return []string{"", text, "", "", "", "", "", ""}
 }
 
 func fmtInformation(info map[string]interface{}, asJSON bool) {

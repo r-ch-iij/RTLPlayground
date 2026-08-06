@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -79,10 +80,13 @@ func TestFmtLink(t *testing.T) {
 		want string
 	}{
 		{float64(0), "down"},
-		{float64(5), "2.5G"},
-		{float64(4), "1G"},
-		{float64(3), "100M"},
-		{float64(2), "10M"},
+		{float64(1), "10M"},
+		{float64(2), "100M"},
+		{float64(3), "1G"},
+		{float64(5), "10G"},
+		{float64(6), "2.5G"},
+		{float64(7), "5G"},
+		{float64(4), "link(4)"},
 		{float64(99), "link(99)"},
 	}
 	for _, tt := range tests {
@@ -621,6 +625,41 @@ func TestAuthRequiredEndpoints(t *testing.T) {
 	}
 }
 
+func TestCmdResetNoResponse(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The firmware closes the connection without sending an HTTP response.
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			t.Fatal("server does not support hijacking")
+		}
+		conn, _, err := hj.Hijack()
+		if err != nil {
+			t.Fatal(err)
+		}
+		conn.Close()
+	}))
+	defer ts.Close()
+
+	host := strings.TrimPrefix(ts.URL, "http://")
+	client := NewClient(host, "")
+
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	err := cmdReset(client, nil, false)
+	w.Close()
+	os.Stdout = old
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	if err != nil {
+		t.Fatalf("cmdReset should succeed even without an HTTP response, got: %v", err)
+	}
+	if !strings.Contains(buf.String(), "reset command sent") {
+		t.Errorf("expected success message, got: %q", buf.String())
+	}
+}
+
 func TestBinaryEndToEnd(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping binary integration test in short mode")
@@ -1081,4 +1120,25 @@ func newMockServer(t *testing.T) *httptest.Server {
 			fmt.Fprint(w, "mock")
 		}
 	}))
+}
+
+func TestEosSpeed(t *testing.T) {
+	tests := []struct {
+		link interface{}
+		want string
+	}{
+		{float64(0), "down"},
+		{float64(1), "10M"},
+		{float64(2), "100M"},
+		{float64(3), "1G"},
+		{float64(5), "10G"},
+		{float64(6), "2.5G"},
+		{float64(7), "5G"},
+		{float64(4), "down"},
+	}
+	for _, tt := range tests {
+		if got := eosSpeed(tt.link); got != tt.want {
+			t.Errorf("eosSpeed(%v) = %q, want %q", tt.link, got, tt.want)
+		}
+	}
 }
